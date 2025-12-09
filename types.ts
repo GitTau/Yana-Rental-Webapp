@@ -1,3 +1,4 @@
+
 export enum BookingStatus {
   Active = 'Active',
   Returned = 'Returned',
@@ -37,6 +38,7 @@ export enum ChecklistType {
 export interface City {
   id: number;
   name: string;
+  zapPointAddress?: string;
 }
 
 export interface Rate {
@@ -44,6 +46,7 @@ export interface Rate {
   cityId: number;
   clientName?: string;
   dailyRent: number;
+  monthlyRent?: number;
   securityDeposit: number;
 }
 
@@ -64,6 +67,23 @@ export interface Battery {
   assignedVehicleId: number | null;
 }
 
+export interface BankDetails {
+    accountName: string;
+    accountNumber: string;
+    bankName: string;
+    ifscCode: string;
+}
+
+export interface Customer {
+    id: number;
+    name: string;
+    phone: string;
+    address: string;
+    aadharNumber: string;
+    panNumber: string;
+    bankDetails: BankDetails;
+}
+
 export interface Booking {
   id: number;
   customerName: string;
@@ -74,6 +94,7 @@ export interface Booking {
   startDate: string;
   endDate: string;
   dailyRent: number;
+  totalRent: number;
   securityDeposit: number;
   amountCollected: number;
   modeOfPayment: PaymentMode;
@@ -99,4 +120,13 @@ export interface Checklist {
   brakes: boolean;
   battery: boolean;
   notes?: string;
+}
+
+export interface RefundRequest {
+  id: number;
+  bookingId: number;
+  customerName: string;
+  amount: number;
+  status: 'Pending' | 'Processed';
+  date: string;
 }

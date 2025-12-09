@@ -1,4 +1,5 @@
-import { City, Rate, Vehicle, Booking, User, BookingStatus, VehicleStatus, PaymentMode, UserRole, Battery, BatteryStatus } from './types';
+
+import { City, Rate, Vehicle, Booking, User, BookingStatus, VehicleStatus, PaymentMode, UserRole, Battery, BatteryStatus, Customer } from './types';
 
 export const CITIES: City[] = [
   { id: 1, name: 'San Francisco' },
@@ -7,10 +8,10 @@ export const CITIES: City[] = [
 ];
 
 export const RATES: Rate[] = [
-  { id: 1, cityId: 1, dailyRent: 25, securityDeposit: 100 },
-  { id: 2, cityId: 2, dailyRent: 30, securityDeposit: 120 },
-  { id: 3, cityId: 3, dailyRent: 22, securityDeposit: 90 },
-  { id: 4, cityId: 1, clientName: 'Corporate A', dailyRent: 20, securityDeposit: 80 },
+  { id: 1, cityId: 1, dailyRent: 250, monthlyRent: 5000, securityDeposit: 1000 },
+  { id: 2, cityId: 2, dailyRent: 300, monthlyRent: 6000, securityDeposit: 1200 },
+  { id: 3, cityId: 3, dailyRent: 220, monthlyRent: 4500, securityDeposit: 900 },
+  { id: 4, cityId: 1, clientName: 'Corporate A', dailyRent: 200, monthlyRent: 4000, securityDeposit: 800 },
 ];
 
 export const BATTERIES: Battery[] = [
@@ -42,6 +43,7 @@ export const BOOKINGS: Booking[] = [
     startDate: '2024-07-28',
     endDate: '2024-07-30',
     dailyRent: 25,
+    totalRent: 50,
     securityDeposit: 100,
     amountCollected: 150,
     modeOfPayment: PaymentMode.Card,
@@ -55,21 +57,38 @@ export const USERS: User[] = [
   { id: 3, name: 'Operator NYC', role: UserRole.Operator, cityId: 2 },
 ];
 
+export const CUSTOMERS: Customer[] = [
+    {
+        id: 1,
+        name: 'John Doe',
+        phone: '123-456-7890',
+        address: '123 Market St, San Francisco',
+        aadharNumber: '123456789012',
+        panNumber: 'ABCDE1234F',
+        bankDetails: {
+            accountName: 'John Doe',
+            accountNumber: '9876543210',
+            bankName: 'City Bank',
+            ifscCode: 'CITI0001234'
+        }
+    }
+];
+
 export const POST_RIDE_CHECKLIST_ITEMS = [
-    { label: 'Nuts & Bolts', fine: 5 },
-    { label: 'Headlight', fine: 20 },
-    { label: 'Backlight', fine: 20 },
-    { label: 'Tires & Rims', fine: 50 },
-    { label: 'Fan', fine: 15 },
-    { label: 'Number plates', fine: 10 },
-    { label: 'Phone Stand', fine: 10 },
-    { label: 'Foot rest', fine: 15 },
-    { label: 'Side stand', fine: 15 },
-    { label: 'Brake levers', fine: 25 },
-    { label: 'Brake shoes', fine: 25 },
-    { label: 'Motor', fine: 100 },
-    { label: 'Scratches', fine: 30 },
-    { label: 'Paint loss', fine: 40 },
-    { label: 'Control Panel', fine: 60 },
-    { label: 'Seat', fine: 20 },
+    { label: 'Nuts & Bolts', fine: 50 },
+    { label: 'Headlight', fine: 200 },
+    { label: 'Backlight', fine: 200 },
+    { label: 'Tires & Rims', fine: 500 },
+    { label: 'Fan', fine: 150 },
+    { label: 'Number plates', fine: 100 },
+    { label: 'Phone Stand', fine: 100 },
+    { label: 'Foot rest', fine: 150 },
+    { label: 'Side stand', fine: 150 },
+    { label: 'Brake levers', fine: 250 },
+    { label: 'Brake shoes', fine: 250 },
+    { label: 'Motor', fine: 1000 },
+    { label: 'Scratches', fine: 300 },
+    { label: 'Paint loss', fine: 400 },
+    { label: 'Control Panel', fine: 600 },
+    { label: 'Seat', fine: 200 },
 ];

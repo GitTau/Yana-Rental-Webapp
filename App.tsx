@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
-import { Booking, Vehicle, Rate, User, City, BookingStatus, VehicleStatus, Battery, BatteryStatus } from './types';
-import { CITIES, RATES, VEHICLES, BOOKINGS, USERS, BATTERIES } from './constants';
+import { Booking, Vehicle, Rate, User, City, BookingStatus, VehicleStatus, Battery, BatteryStatus, RefundRequest, Customer } from './types';
+import { CITIES, RATES, VEHICLES, BOOKINGS, USERS, BATTERIES, CUSTOMERS } from './constants';
 import { OperationsPanel } from './components/OperationsPanel';
 import AdminPanel from './components/AdminPanel';
 
@@ -14,6 +15,8 @@ const App: React.FC = () => {
     const [users, setUsers] = useState<User[]>(USERS);
     const [cities, setCities] = useState<City[]>(CITIES);
     const [batteries, setBatteries] = useState<Battery[]>(BATTERIES);
+    const [customers, setCustomers] = useState<Customer[]>(CUSTOMERS);
+    const [refundRequests, setRefundRequests] = useState<RefundRequest[]>([]);
     const [view, setView] = useState<View>('operations');
     const [selectedCityId, setSelectedCityId] = useState<number>(CITIES[0]?.id ?? 1);
 
@@ -36,7 +39,11 @@ const App: React.FC = () => {
         }
     };
 
-    const updateBookingStatus = (bookingId: number, status: BookingStatus, checklistData?: { items: Record<string, boolean>, fine: number, notes: string }) => {
+    const addCustomer = (newCustomer: Omit<Customer, 'id'>) => {
+        setCustomers(prev => [...prev, { id: Date.now(), ...newCustomer }]);
+    };
+
+    const updateBookingStatus = (bookingId: number, status: BookingStatus, checklistData?: { items: Record<string, boolean>, fine: number, notes: string, settlementAdjustment?: number }) => {
         const booking = bookings.find(b => b.id === bookingId);
         if (!booking) return;
 
@@ -48,6 +55,7 @@ const App: React.FC = () => {
                 fineAmount: (b.fineAmount || 0) + (checklistData?.fine || 0),
                 postRideChecklist: checklistData?.items,
                 postRideNotes: checklistData?.notes,
+                amountCollected: b.amountCollected + (checklistData?.settlementAdjustment || 0)
               } 
             : b
         ));
@@ -92,6 +100,11 @@ const App: React.FC = () => {
         }));
     };
 
+    // --- Vehicle Management ---
+    const addVehicle = (vehicle: Omit<Vehicle, 'id'>) => {
+        setVehicles(prev => [...prev, { id: Date.now(), ...vehicle }]);
+    };
+
     const updateVehicle = (updatedVehicle: Vehicle) => {
         const originalVehicle = vehicles.find(v => v.id === updatedVehicle.id);
         if (!originalVehicle) return;
@@ -119,10 +132,105 @@ const App: React.FC = () => {
         }
     };
 
+    const deleteVehicle = (id: number) => {
+        setVehicles(prev => prev.filter(v => v.id !== id));
+    };
+
+    const bulkImportVehicles = (newVehicles: Omit<Vehicle, 'id'>[]) => {
+        const timestamp = Date.now();
+        const imported = newVehicles.map((v, idx) => ({ ...v, id: timestamp + idx }));
+        setVehicles(prev => [...prev, ...imported]);
+    };
+
+    // --- Battery Management ---
+    const addBattery = (battery: Omit<Battery, 'id'>) => {
+        setBatteries(prev => [...prev, { id: Date.now(), ...battery }]);
+    };
+
     const updateBattery = (updatedBattery: Battery) => {
         setBatteries(prevBatteries => prevBatteries.map(b =>
             b.id === updatedBattery.id ? updatedBattery : b
         ));
+    };
+
+    const deleteBattery = (id: number) => {
+        setBatteries(prev => prev.filter(b => b.id !== id));
+    };
+
+    const bulkImportBatteries = (newBatteries: Omit<Battery, 'id'>[]) => {
+        const timestamp = Date.now();
+        const imported = newBatteries.map((b, idx) => ({ ...b, id: timestamp + idx }));
+        setBatteries(prev => [...prev, ...imported]);
+    };
+
+    // --- Rate Management ---
+    const addRate = (rate: Omit<Rate, 'id'>) => {
+        setRates(prev => [...prev, { id: Date.now(), ...rate }]);
+    };
+
+    const updateRate = (updatedRate: Rate) => {
+        setRates(prev => prev.map(r => r.id === updatedRate.id ? updatedRate : r));
+    };
+
+    const deleteRate = (id: number) => {
+        setRates(prev => prev.filter(r => r.id !== id));
+    };
+
+    const bulkImportRates = (newRates: Omit<Rate, 'id'>[]) => {
+        const timestamp = Date.now();
+        const imported = newRates.map((r, idx) => ({ ...r, id: timestamp + idx }));
+        setRates(prev => [...prev, ...imported]);
+    };
+    
+    // --- City Management ---
+    const addCity = (name: string, zapPointAddress: string) => {
+        setCities(prev => [...prev, { id: Date.now(), name, zapPointAddress }]);
+    };
+    
+    const updateCity = (id: number, name: string, zapPointAddress: string) => {
+        setCities(prev => prev.map(c => c.id === id ? { ...c, name, zapPointAddress } : c));
+    };
+
+
+    const settleBookingDue = (bookingId: number) => {
+        setBookings(prev => prev.map(b => {
+            if (b.id === bookingId) {
+                const totalPayable = b.totalRent + b.securityDeposit + (b.fineAmount || 0);
+                return { 
+                    ...b, 
+                    amountCollected: totalPayable,
+                    // If it was 'Pending Payment' and is now fully paid, mark as Returned
+                    status: b.status === BookingStatus.PendingPayment ? BookingStatus.Returned : b.status
+                };
+            }
+            return b;
+        }));
+    };
+
+    const raiseRefundRequest = (bookingId: number, amount: number, customerName: string) => {
+        const newRequest: RefundRequest = {
+            id: Date.now(),
+            bookingId,
+            amount,
+            customerName,
+            status: 'Pending',
+            date: new Date().toISOString().split('T')[0]
+        };
+        setRefundRequests(prev => [...prev, newRequest]);
+    };
+
+    const processRefundRequest = (requestId: number) => {
+        setRefundRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: 'Processed' } : r));
+        
+        // When refund is processed, update the booking's amountCollected to reflect the money returned
+        const request = refundRequests.find(r => r.id === requestId);
+        if (request) {
+            setBookings(prev => prev.map(b => 
+                b.id === request.bookingId 
+                ? { ...b, amountCollected: b.amountCollected - request.amount } 
+                : b
+            ));
+        }
     };
 
     return (
@@ -177,9 +285,13 @@ const App: React.FC = () => {
                             cities={cities}
                             batteries={batteries}
                             users={users}
+                            customers={customers}
                             addBooking={addBooking}
+                            addCustomer={addCustomer}
                             updateBookingStatus={updateBookingStatus}
                             changeBatteryForBooking={changeBatteryForBooking}
+                            settleBookingDue={settleBookingDue}
+                            raiseRefundRequest={raiseRefundRequest}
                         />
                     </>
                 ) : (
@@ -191,8 +303,26 @@ const App: React.FC = () => {
                             cities={cities}
                             bookings={bookings}
                             batteries={batteries}
+                            refundRequests={refundRequests}
+                            
+                            addVehicle={addVehicle}
                             updateVehicle={updateVehicle}
+                            deleteVehicle={deleteVehicle}
+                            bulkImportVehicles={bulkImportVehicles}
+
+                            addBattery={addBattery}
                             updateBattery={updateBattery}
+                            deleteBattery={deleteBattery}
+                            bulkImportBatteries={bulkImportBatteries}
+
+                            addRate={addRate}
+                            updateRate={updateRate}
+                            deleteRate={deleteRate}
+                            bulkImportRates={bulkImportRates}
+
+                            addCity={addCity}
+                            updateCity={updateCity}
+                            processRefundRequest={processRefundRequest}
                         />
                     </div>
                 )}
